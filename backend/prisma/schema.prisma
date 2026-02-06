@@ -20,6 +20,8 @@ model User {
     comments Comment[]
     likes    Like[]
     ratings  Rating[]
+    accessToken    String?   // optional field
+    refreshToken   String?   // optional field
     following Follow[] @relation("UserFollowing")
     followers Follow[] @relation("UserFollowers")
 }

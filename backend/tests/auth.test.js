@@ -9,7 +9,7 @@ describe("Auth", () => {
       email: "test@test.com",
       password: "123456",
     });
-    expect(res.statusCode).toBe(200);
+    expect(res.statusCode).toBe(201);
   });
   //login test should be after register test, otherwise it will fail because the user is not created yet
   it("should login user", async () => {

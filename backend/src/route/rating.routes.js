@@ -4,10 +4,11 @@ import { auth } from "../../middleware/auth.middleware.js";
 
 const router = express.Router();
 
-// Create a rating
+// Create or update a rating (upsert)
 router.post("/", auth, async (req, res) => {
   try {
     const { blogId, value } = req.body;
+
     if (!blogId || typeof value !== "number") {
       return res.status(400).json({ message: "blogId and value are required" });
     }
@@ -19,22 +20,23 @@ router.post("/", auth, async (req, res) => {
       where: {
         userId_blogId: {
           userId: req.user.id,
-          blogId: Number(blogId)
-        }
+          blogId: Number(blogId),
+        },
       },
       create: {
         userId: req.user.id,
         blogId: Number(blogId),
-        value: Number(value)
+        value: Number(value),
       },
       update: {
-        value: Number(value)
-      }
+        value: Number(value),
+      },
     });
 
     res.status(201).json(rating);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Rating creation error:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -42,6 +44,10 @@ router.post("/", auth, async (req, res) => {
 router.get("/blog/:blogId", async (req, res) => {
   try {
     const blogId = Number(req.params.blogId);
+    if (isNaN(blogId)) {
+      return res.status(400).json({ message: "Invalid blogId" });
+    }
+
     const avg = await prisma.rating.aggregate({
       where: { blogId },
       _avg: { value: true },
@@ -50,7 +56,8 @@ router.get("/blog/:blogId", async (req, res) => {
 
     res.json({ average: avg._avg.value ?? 0, count });
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Fetch average rating error:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -59,6 +66,8 @@ router.put("/:id", auth, async (req, res) => {
   try {
     const id = Number(req.params.id);
     const { value } = req.body;
+
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid rating ID" });
     if (typeof value !== "number") {
       return res.status(400).json({ message: "value is required" });
     }
@@ -79,7 +88,8 @@ router.put("/:id", auth, async (req, res) => {
 
     res.json(rating);
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Update rating error:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
@@ -87,15 +97,20 @@ router.put("/:id", auth, async (req, res) => {
 router.delete("/:id", auth, async (req, res) => {
   try {
     const id = Number(req.params.id);
+
+    if (isNaN(id)) return res.status(400).json({ message: "Invalid rating ID" });
+
     const existing = await prisma.rating.findUnique({ where: { id } });
     if (!existing) return res.status(404).json({ message: "Not found" });
     if (existing.userId !== req.user.id) {
       return res.status(403).json({ message: "Forbidden" });
     }
+
     await prisma.rating.delete({ where: { id } });
     res.status(204).end();
   } catch (err) {
-    res.status(500).json({ message: err.message });
+    console.error("Delete rating error:", err);
+    res.status(500).json({ message: "Internal server error" });
   }
 });
 
