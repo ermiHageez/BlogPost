@@ -1,0 +1,75 @@
+datasource db {
+  provider = "postgresql"
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model User {
+    id       Int      @id @default(autoincrement())
+    username String   @unique
+    email    String   @unique
+    password String
+    name     String?
+    lastName String?
+    bio      String?
+    profilePicture String?
+    role     String   @default("USER")
+    blogs    Blog[]
+    comments Comment[]
+    likes    Like[]
+    ratings  Rating[]
+    following Follow[] @relation("UserFollowing")
+    followers Follow[] @relation("UserFollowers")
+}
+
+model Blog {
+    id      Int      @id @default(autoincrement())
+    title   String
+    content String
+    tags    String[] @default([])
+    userId  Int
+    user    User     @relation(fields: [userId], references: [id])
+    comments Comment[]
+    likes    Like[]
+    ratings  Rating[]
+}
+
+model Comment {
+    id      Int    @id @default(autoincrement())
+    content String
+    userId  Int
+    blogId  Int
+    user    User   @relation(fields: [userId], references: [id])
+    blog    Blog   @relation(fields: [blogId], references: [id])
+}
+
+model Like {
+    id     Int @id @default(autoincrement())
+    userId Int
+    blogId Int
+    user   User @relation(fields: [userId], references: [id])
+    blog   Blog @relation(fields: [blogId], references: [id])
+}
+
+model Rating {
+    id     Int @id @default(autoincrement())
+    value  Int
+    userId Int
+    blogId Int
+    user   User @relation(fields: [userId], references: [id])
+    blog   Blog @relation(fields: [blogId], references: [id])
+
+    @@unique([userId, blogId])
+}
+
+model Follow {
+    id           Int  @id @default(autoincrement())
+    followerId   Int
+    followingId  Int
+    follower     User @relation("UserFollowing", fields: [followerId], references: [id])
+    following    User @relation("UserFollowers", fields: [followingId], references: [id])
+
+    @@unique([followerId, followingId])
+}
