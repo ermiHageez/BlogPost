@@ -8,6 +8,7 @@ import likeRouter from "./route/like.router.js";
 import ratingRouter from "./route/rating.routes.js";
 import searchRouter from "./route/search.router.js";
 import userRouter from "./route/user.routes.js";
+import aiRouter from "./route/ai.router.js";
 
 dotenv.config();
 
@@ -17,6 +18,7 @@ app.use(express.json());
 app.use("/auth", authRouter);
 app.use("/blogs", blogRouter);
 app.use("/blog", blogRouter);
+app.use("/", aiRouter);
 app.use("/comments", commentRouter);
 app.use("/likes", likeRouter);
 app.use("/ratings", ratingRouter);

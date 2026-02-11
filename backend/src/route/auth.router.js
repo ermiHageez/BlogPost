@@ -45,12 +45,6 @@ router.post("/register", async (req, res) => {
       role: user.role || "user"
     });
 
-    // // Save tokens in DB
-    // await prisma.user.update({
-    //   where: { id: user.id },
-    //   data: { accessToken, refreshToken }
-    // });
-
     res.status(201).json({
       id: user.id,
       username: user.username,

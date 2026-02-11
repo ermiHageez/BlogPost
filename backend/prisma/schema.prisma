@@ -31,6 +31,7 @@ model Blog {
     title   String
     content String
     tags    String[] @default([])
+    coverImage  String?
     userId  Int
     user    User     @relation(fields: [userId], references: [id])
     comments Comment[]

@@ -133,5 +133,59 @@ router.delete("/:id", auth, async (req, res) => {
     res.status(500).json({ message: "Internal server error" });
   }
 });
+// Protected: Enhance blog content using n8n workflow
+router.post("/:id/enhance", auth, async (req, res) => {
+  const blogId = Number(req.params.id);
+
+  const blog = await prisma.blog.findUnique({ where: { id: blogId } });
+  if (!blog) return res.status(404).json({ message: "Blog not found" });
+
+  // Only owner can enhance
+  if (blog.userId !== req.user.id) {
+    return res.status(403).json({ message: "Forbidden" });
+  }
+
+  const response = await fetch(process.env.N8N_ENHANCE_WEBHOOK, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      text: blog.content,
+      blogId: blog.id
+    })
+  });
+
+  // ✅ SAFE RESPONSE HANDLING
+  const rawText = await response.text();
+
+  let data = {};
+  if (rawText) {
+    try {
+      data = JSON.parse(rawText);
+    } catch (err) {
+      return res.status(502).json({
+        message: "Invalid response from n8n",
+        raw: rawText
+      });
+    }
+  } else {
+    return res.status(502).json({
+      message: "Empty response from n8n"
+    });
+  }
+
+  if (!data.enhancedText) {
+    return res.status(502).json({
+      message: "n8n did not return enhancedText"
+    });
+  }
+
+  const updated = await prisma.blog.update({
+    where: { id: blogId },
+    data: { content: data.enhancedText }
+  });
+
+  res.json(updated);
+});
+
 
 export default router;
